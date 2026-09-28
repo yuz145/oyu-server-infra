@@ -2,6 +2,14 @@
 # このファイルを terraform.tfvars にコピーして実際の値を設定してください。
 # ※ terraform.tfvars は秘密情報を含むため、Git には絶対にコミットしないでください。
 
+# Cloudflare 設定
 cloudflare_zone_id        = "0123456789abcdef0123456789abcdef"
 cloudflare_play_record_id = "fedcba9876543210fedcba9876543210"
 vps_public_ip             = "198.51.100.1" # サンプル用IPアドレス (RFC 5737)
+
+# OCI 認証設定
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+user_ocid        = "ocid1.user.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+fingerprint      = "20:3b:97:13:55:1c:5b:0d:d3:37:d8:50:4e:c5:42:e7"
+private_key_path = "~/.oci/oci_api_key.pem"
+region           = "ap-tokyo-1"
