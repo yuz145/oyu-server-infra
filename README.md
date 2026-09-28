@@ -2,6 +2,8 @@
 
 自宅オンプレミスサーバー、クラウド VPS（OCI Always Free）、および Cloudflare を連携させた、高セキュリティ・低遅延なゲームサーバー基盤を構築・管理するための Terraform（Infrastructure as Code）コードベースです。
 
+本リポジトリは **「ローカルに一切のシークレットファイルを残さない（Zero Local Secrets）」** という大企業水準のセキュリティ思想に基づき、シークレットマネージャー（**Infisical**）による実行時オンメモリ動的注入を前提として設計されています。
+
 ---
 
 ## 🏛 アーキテクチャ概要
@@ -42,6 +44,7 @@ flowchart LR
 ## 🛠 技術スタック
 
 - **IaC (構成管理)**: Terraform v1.16+ (HCL)
+- **シークレット管理**: Infisical (実行時オンメモリ動的注入)
 - **エッジ / DNS**: Cloudflare Provider v5 (`cloudflare_dns_record`)
 - **クラウド中継**: Oracle Cloud Infrastructure (OCI Always Free VM)
 - **オーバーレイネットワーク**: Tailscale (ゼロトラスト ACL & サブネット分離)
@@ -55,20 +58,23 @@ flowchart LR
 .
 ├── .gitignore               # 機密情報（state, tfvars, .env 等）の完全除外
 ├── .terraform.lock.hcl      # プロバイダ依存関係のロック（再現性の担保）
-├── versions.tf              # Terraform 本体および Cloudflare Provider v5 のバージョン定義
-├── variables.tf             # 汎用的な入力変数の型宣言と説明
-├── terraform.tfvars.example # 公開用サンプル設定ファイル（ダミー値）
-├── cloudflare.tf            # DNS レコード定義および宣言的 import ブロック
+├── versions.tf              # Terraform 本体、Cloudflare / OCI プロバイダ定義
+├── variables.tf             # 必要な全変数の型宣言・ドキュメント定義（変数の仕様書）
+├── cloudflare.tf            # 宣言的 import ブロック & play DNSレコード定義
+├── oci.tf                   # 宣言的 import ブロック & VCN デフォルトセキュリティリスト定義
 └── README.md                # 本ドキュメント（システム解説）
 ```
+
+> [!NOTE]
+> **なぜ `terraform.tfvars.example` が存在しないのか？**  
+> 本リポジトリはシークレットマネージャー（Infisical）によるメモリ注入を前提としており、手元に `*.tfvars` ファイルを 1 枚も作成しないアーキテクチャを採用しています。必要な変数の仕様（型や説明）はすべて [`variables.tf`](variables.tf) に宣言されています。
 
 ---
 
 ## 🔒 セキュリティ・秘匿情報の防衛設計（Public リポジトリ前提）
 
-1. **機密情報の完全隔離**:
-   - `terraform.tfstate`（状態台帳ファイル）および `*.tfvars`（実設定値ファイル）は `.gitignore` により Git の追跡から徹底的に除外されています。
-   - API トークンはコード内に一切記述せず、環境変数（`CLOUDFLARE_API_TOKEN`）から自動読み込みを行います。
+1. **ゼロ・ローカルファイル運用 (Infisical 動的注入)**:
+   - 手元に `*.tfvars` やクレデンシャルファイルを作成しません。API トークンや秘密鍵は Infisical 上で一元管理され、Terraform 実行時にメモリ上へ直接 `TF_VAR_*` として注入されます。
 2. **既存環境の無停止（ノーダウン）移行**:
    - Terraform 1.5+ の宣言的 `import {}` ブロックを採用し、稼働中の本番サービスを停止させることなく、コード管理下へと安全に状態収束させます。
 3. **ビルド再現性の保証**:
@@ -76,11 +82,11 @@ flowchart LR
 
 ---
 
-## 🚀 セットアップ手順
+## 🚀 セットアップ ＆ 実行手順
 
 ### 前提条件
 - Terraform >= 1.5.0
-- Cloudflare API トークン（権限: `Zone - DNS - Edit` または `Read`）
+- Infisical CLI
 
 ### 実行手順
 
@@ -90,28 +96,29 @@ flowchart LR
    cd oyu-server-infra
    ```
 
-2. **API トークンの環境変数設定**:
+2. **Infisical CLI のインストール**:
    ```bash
-   export CLOUDFLARE_API_TOKEN="あなたのAPIトークン"
+   brew install infisical/get-cli/infisical
    ```
 
-3. **ローカル設定ファイルの作成**:
-   サンプルファイルをコピーし、実際の環境に合わせて値を入力します（このファイルは Git にコミットされません）。
+3. **Infisical へのログインとプロジェクト接続**:
    ```bash
-   cp terraform.tfvars.example terraform.tfvars
-   # terraform.tfvars を編集して実際の ID や IP アドレスを記述
+   infisical login
+   infisical init
    ```
+   ※ [`variables.tf`](variables.tf) に定義された各変数を、Infisical ダッシュボードに `TF_VAR_<変数名>` の形式で登録します。
 
-4. **Terraform の初期化と適用**:
+4. **オンメモリ動的注入による実行**:
+   ローカルに設定ファイルを生成せず、Infisical 経由で安全に実行します：
    ```bash
    # プロバイダの初期化
-   terraform init
+   infisical run -- terraform init
 
-   # 実行計画の確認
-   terraform plan
+   # 実行計画の確認 (メモリ注入)
+   infisical run -- terraform plan
 
-   # 構成の適用
-   terraform apply
+   # 構成の適用 (メモリ注入)
+   infisical run -- terraform apply
    ```
 
 ---
