@@ -1,0 +1,7 @@
+# 設定変数のサンプルファイル
+# このファイルを terraform.tfvars にコピーして実際の値を設定してください。
+# ※ terraform.tfvars は秘密情報を含むため、Git には絶対にコミットしないでください。
+
+cloudflare_zone_id        = "0123456789abcdef0123456789abcdef"
+cloudflare_play_record_id = "fedcba9876543210fedcba9876543210"
+vps_public_ip             = "198.51.100.1" # サンプル用IPアドレス (RFC 5737)
