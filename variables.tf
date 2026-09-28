@@ -44,3 +44,8 @@ variable "region" {
   description = "OCI プロバイダの対象リージョン"
   default     = "ap-tokyo-1"
 }
+
+variable "oci_default_security_list_id" {
+  type        = string
+  description = "OCI VCNのデフォルトセキュリティリストのOCID"
+}

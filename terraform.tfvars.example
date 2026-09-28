@@ -13,3 +13,6 @@ user_ocid        = "ocid1.user.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 fingerprint      = "20:3b:97:13:55:1c:5b:0d:d3:37:d8:50:4e:c5:42:e7"
 private_key_path = "~/.oci/oci_api_key.pem"
 region           = "ap-tokyo-1"
+
+# OCI ネットワーク設定
+oci_default_security_list_id = "ocid1.securitylist.oc1.ap-tokyo-1.aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
